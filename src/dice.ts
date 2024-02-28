@@ -1,11 +1,11 @@
 const rollDice = () => Math.floor(Math.random() * (6)) + 1;
 
-type IDiceResult = [number, number];
+type IDicesRollResult = [number, number];
 
 export const diceService = () => {
   return {
-    roll: (): IDiceResult => {
+    roll: (): IDicesRollResult => {
       return [rollDice(), rollDice()];
-    },
+    }
   };
 };

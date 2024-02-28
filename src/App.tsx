@@ -1,5 +1,6 @@
-import { FC, useState } from 'react';
+import { FC } from 'react';
 import { diceService } from './dice';
+import {useStore} from "./useStore";
 
 /**
  * your task is to create a henhouse game. To win a game you have to fill henhouse with hens. There are 9 slots for hens. Every henhouse has also a rooster, so you can place inside a rooster as well on 10th slot.
@@ -37,43 +38,26 @@ import { diceService } from './dice';
  *
  */
 
-interface IPlayer {
-  id: number;
-  name: string;
-  rolls: [number, number][];
-  hens: number;
-  chicken: number;
-  egg: number;
-  rooster: true;
-}
-
-export interface IStore {
-  activePlayerId: number;
-  players: IPlayer[];
-}
 
 const Game = () => {
-  const [store, setStore] = useState<IStore>({
-    activePlayerId: 0,
-    players: [{ id: 0, name: 'Pepa', egg: 0, chicken: 0, hens: 0, rooster: true, rolls: [] }],
-  });
-
-  const dice = diceService();
+  const [store, dispatch] = useStore()
   const currentPlayer = store.players.find((player) => player.id === store.activePlayerId);
 
+  console.log(store)
+
+  if (store.gameState === 'evaluateEndOfTurn') {
+      dispatch({ action: 'switchTurns' });
+  }
+
   const onRollDices = () => {
-    const turnRoll = dice.roll();
-    setStore({
-      ...store,
-      players: store.players.map((player) => store.activePlayerId === player.id ? {...player, rolls: [...player.rolls, turnRoll ] } : player),
-    });
+    dispatch({ action: 'roll' });
   };
 
   return (
     <div>
       Player name {currentPlayer?.name}
       {currentPlayer.rolls[currentPlayer.rolls.length - 1] ? <p>{currentPlayer.name}'s current dice roll is: {currentPlayer.rolls[currentPlayer.rolls.length - 1]}</p> : null}
-      <button onClick={onRollDices}>Roll a dices</button>
+      <button disabled={store.gameState !== 'tradeOrRoll'} onClick={onRollDices}>Roll a dices</button>
     </div>
     );
 };
