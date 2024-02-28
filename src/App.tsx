@@ -50,17 +50,16 @@ interface IPlayer {
 export interface IStore {
   activePlayerId: number;
   players: IPlayer[];
-  activePlayer: number;
 }
 
-const Game = ({ name }: { name: string }) => {
+const Game = () => {
   const [store, setStore] = useState<IStore>({
     activePlayerId: 0,
     players: [{ id: 0, name: 'Pepa', egg: 0, chicken: 0, hens: 0, rooster: true, rolls: [] }],
-    activePlayer: 0
   });
 
   const dice = diceService();
+  const currentPlayer = store.players.find((player) => player.id === store.activePlayerId);
 
   const onRollDices = () => {
     const turnRoll = dice.roll();
@@ -68,11 +67,12 @@ const Game = ({ name }: { name: string }) => {
       ...store,
       players: store.players.map((player) => store.activePlayerId === player.id ? {...player, rolls: [...player.rolls, turnRoll ] } : player),
     });
-  }; 
+  };
 
   return (
     <div>
-      Player name {store.players.filter((player) => player.id === store.activePlayerId)[0].name}
+      Player name {currentPlayer?.name}
+      {currentPlayer.rolls[currentPlayer.rolls.length - 1] ? <p>{currentPlayer.name}'s current dice roll is: {currentPlayer.rolls[currentPlayer.rolls.length - 1]}</p> : null}
       <button onClick={onRollDices}>Roll a dices</button>
     </div>
     );
@@ -81,7 +81,7 @@ const Game = ({ name }: { name: string }) => {
 export const App: FC<{ name: string }> = ({ name }) => {
   return (
     <div>
-      <Game {...{ name: 'Joe' }} />
+      <Game  />
     </div>
   );
 };
