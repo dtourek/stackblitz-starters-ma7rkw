@@ -54,8 +54,8 @@ interface IStore {
 
 const Game = ({ name }: { name: string }) => {
   const [store, setStore] = useState<IStore>({
-    activePlayerId: 1,
-    players: [],
+    activePlayerId: 0,
+    players: [{ id: 0, name: 'Pepa', egg: 0, chicken: 0, hens: 0, rooster: true, rolls: [] }],
   });
 
   const dice = diceService();
@@ -63,14 +63,14 @@ const Game = ({ name }: { name: string }) => {
   const onRollDices = () => {
     const turnRoll = dice.roll();
     setStore({
-      ...store.players,
+      ...store,
       players: store.players.map((player) => store.activePlayerId === player.id ? {...player, rolls: [...player.rolls, turnRoll ] } : player),
     });
   }; 
 
   return (
     <div>
-      Player name {store.players.filter((player) => player.id === store.activePlayerId).name}
+      Player name {store.players.find((player) => player.id === store.activePlayerId).name}
       <button onClick={onRollDices}>Roll a dices</button>
     </div>
   );
