@@ -39,6 +39,7 @@ import { diceService } from './dice';
 
 interface IPlayer {
   id: number;
+  name: string;
   rolls: [number, number][];
   hens: number;
   chicken: number;
@@ -63,13 +64,13 @@ const Game = ({ name }: { name: string }) => {
     const turnRoll = dice.roll();
     setStore({
       ...store.players,
-      players: store.players.map((player) => [...player.rolls, turnRoll]),
+      players: store.players.map((player) => store.activePlayerId === player.id ? {...player, rolls: [...player.rolls, turnRoll ] } : player),
     });
-  };
+  }; 
 
   return (
     <div>
-      Player name {name}
+      Player name {store.players.filter((player) => player.id === store.activePlayerId).name}
       <button onClick={onRollDices}>Roll a dices</button>
     </div>
   );
