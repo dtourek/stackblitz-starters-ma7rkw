@@ -1,6 +1,6 @@
 import { FC } from 'react';
-import { diceService } from './dice';
-import {useStore} from "./useStore";
+import {getCurrentPlayer, useStore} from "./useStore";
+import {HenHouse} from "./components/HenHouse";
 
 /**
  * your task is to create a henhouse game. To win a game you have to fill henhouse with hens. There are 9 slots for hens. Every henhouse has also a rooster, so you can place inside a rooster as well on 10th slot.
@@ -41,7 +41,7 @@ import {useStore} from "./useStore";
 
 const Game = () => {
   const [store, dispatch] = useStore()
-  const currentPlayer = store.players.find((player) => player.id === store.activePlayerId);
+  const currentPlayer = getCurrentPlayer(store)
 
   console.log(store)
 
@@ -58,6 +58,7 @@ const Game = () => {
       Player name {currentPlayer?.name}
       {currentPlayer.rolls[currentPlayer.rolls.length - 1] ? <p>{currentPlayer.name}'s current dice roll is: {currentPlayer.rolls[currentPlayer.rolls.length - 1]}</p> : null}
       <button disabled={store.gameState !== 'tradeOrRoll'} onClick={onRollDices}>Roll a dices</button>
+      <HenHouse />
     </div>
     );
 };

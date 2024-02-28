@@ -47,7 +47,9 @@ type IRoosterAttack = { action: 'roosterAttack' }
 
 type IReducerActions = IRoll | ISwitchTurns | ITradeOrRoll | IEvaluate | ITradeChicken | ITradeEggs | IRoosterAttack;
 
-const storeReducer = (state: IStore, payload: IReducerActions) => {
+export const getCurrentPlayer = (store: IStore) => store.players.find((player) => player.id === store.activePlayerId);
+
+const storeReducer = (state: IStore, payload: IReducerActions): IStore => {
     const dice = diceService()
 
     switch (payload.action) {
@@ -103,5 +105,5 @@ const storeReducer = (state: IStore, payload: IReducerActions) => {
 export const useStore = () => useReducer(storeReducer, {
     activePlayerId: 0,
     gameState: 'switchTurns',
-    players: [{ id: 0, name: 'Pepa', egg: 0, chicken: 0, hens: 0, rooster: true, rolls: [] }],
+    players: [{ id: 0, name: 'Pepa', egg: 3, chicken: 7, hens: 5, rooster: true, rolls: [] }],
 })
