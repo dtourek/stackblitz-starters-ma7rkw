@@ -1,4 +1,5 @@
 import { IStore } from './App';
+import { diceService } from './dice';
 
 type IGameState =
   | 'switchTurns'
@@ -22,6 +23,8 @@ export const processGameState = (state: IGameState, store: IStore) => {
         // else roll();
         break;
     case 'roll': 
+        resultStore.players[resultStore.activePlayerId].rolls.push(diceService().roll());
+        resultState = 'tradeOrRoll';
         // Roll dice
         break;
     case 'trade': 
