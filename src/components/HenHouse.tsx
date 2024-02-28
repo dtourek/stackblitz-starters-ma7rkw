@@ -8,7 +8,7 @@ const getEmoji = (type: IAnimal) => {
         case 'rooster':
             return '🐓';
         case 'chickens':
-            return '🐥';
+            return <img src={"ChickenAttack.gif"} />;
         case 'fox':
             return '🦊';
         case 'eggs':

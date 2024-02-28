@@ -14,7 +14,7 @@ interface IPlayer {
     hens: number;
     chicken: number;
     egg: number;
-    rooster: true;
+    rooster: boolean;
 }
 
 type IGameState =
