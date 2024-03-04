@@ -1,4 +1,4 @@
-import {getCurrentPlayer, useStore} from "../useStore";
+import {getCurrentPlayer, IStore, useStore} from "../useStore";
 
 type IAnimal = 'hens' | 'chickens' | 'eggs' | 'rooster' | 'fox'
 const getEmoji = (type: IAnimal) => {
@@ -20,8 +20,7 @@ const Slot = ({type, count}: {type: IAnimal, count: number}) => {
     return <div>{Array.from(new Array(count)).map((_, index) => <span key={index}>{getEmoji(type)}</span>)} </div>
 }
 
-export const HenHouse = () => {
-    const [store, dispatch] = useStore()
+export const HenHouse = ({ store }: { store: IStore }) => {
     const currentPlayer = getCurrentPlayer(store)
 
     return (<div>
