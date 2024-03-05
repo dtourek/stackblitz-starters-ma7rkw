@@ -1,8 +1,10 @@
-import {GameActions, GameStates, getCurrentPlayer, useStore} from "./hooks/useStore";
 import {HenHouseList} from "./components/HenHouseList";
 import {diceService} from "./dice";
 import {NewGame} from "./components/NewGame";
 import {EndGame} from "./components/EndGame";
+import {GameActions, GameStates} from "./store/enum";
+import {canTradeChicken, canTradeEggs, canTradeHens, getCurrentPlayer} from "./store/utils";
+import {useStore} from "./store/useStore";
 
 /**
  * your task is to create a henhouse game. To win a game you have to fill henhouse with hens. There are 9 slots for hens. Every henhouse has also a rooster, so you can place inside a rooster as well on 10th slot.
@@ -75,11 +77,28 @@ const Game = () => {
         return <NewGame />
   }
 
+  const onTradeEggs = () => {
+    dispatch({ action: GameActions.TradeEggs })
+    dispatch({action: GameStates.EvaluateEndOfTurn })
+  }
+  const onTradeChickens = () => {
+    dispatch({action: GameActions.TradeChickens })
+    dispatch({action: GameStates.EvaluateEndOfTurn })
+  }
+
+  const onTradeHens = () => {
+    dispatch({action: GameActions.TradeHens })
+    dispatch({action: GameStates.EvaluateEndOfTurn })
+  }
+
   return (
     <div>
       Player name {currentPlayer?.name}
-      {currentPlayer.rolls.length ? <p>Hod hráče {currentPlayer.name} je: {currentPlayer.rolls[currentPlayer.rolls.length - 1].join(', ') ?? 'Zatím bez hodu'}</p> : null}
+      {currentPlayer.rolls.length ? <p>Poslední hod hráče {currentPlayer.name} je: {currentPlayer.rolls[currentPlayer.rolls.length - 1].join(', ') ?? 'Zatím bez hodu'}</p> : null}
       <button disabled={store.gameState !== 'tradeOrRoll'} onClick={onRollDices}>Hodit 🎲🎲</button>
+      <button onClick={onTradeEggs} disabled={!canTradeEggs(currentPlayer)} >Vyměnit 3 🥚 za 1 kuře (<img src={"ChickenAttack.gif"} />)</button>
+      <button onClick={onTradeChickens} disabled={!canTradeChicken(currentPlayer)}>Vyměnit 3 <img src={"ChickenAttack.gif"} /> za 1 slepici (🐔)</button>
+      <button onClick={onTradeHens} disabled={!canTradeHens(currentPlayer)}>Vyměnit 3 🐔 za 1 kohouta (🐓)</button>
       <HenHouseList />
       <pre style={{background: "#ccc", padding: "10px", display: "block"}} >{JSON.stringify(store, null, 2)}</pre>
     </div>

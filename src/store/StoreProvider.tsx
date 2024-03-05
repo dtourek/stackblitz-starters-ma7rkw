@@ -1,5 +1,5 @@
 import {createContext, useReducer} from "react";
-import {initStore, storeReducer} from "../hooks/useStore";
+import {initStore, storeReducer} from "./useStore";
 
 export const StoreContext = createContext([])
 export const StoreProvider = ({children}) => {

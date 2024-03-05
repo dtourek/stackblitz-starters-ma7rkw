@@ -1,4 +1,5 @@
-import {getCurrentPlayer, hasPlayerEmptySore, useStore} from "../hooks/useStore";
+import {useStore} from "../store/useStore";
+import {getCurrentPlayer, hasPlayerEmptySore} from "../store/utils";
 
 type IAnimal = 'hens' | 'chickens' | 'eggs' | 'rooster' | 'fox'
 const getEmoji = (type: IAnimal) => {

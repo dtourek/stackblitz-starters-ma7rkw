@@ -1,4 +1,6 @@
-import {GameActions, getCurrentPlayer, useStore} from "../hooks/useStore";
+import {useStore} from "../store/useStore";
+import {GameActions} from "../store/enum";
+import {getCurrentPlayer} from "../store/utils";
 
 export const EndGame = () => {
     const [store, dispatch] = useStore()

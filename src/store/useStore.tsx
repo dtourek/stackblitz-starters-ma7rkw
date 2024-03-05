@@ -1,86 +1,9 @@
-import {useReducer, createContext, useContext, Dispatch} from "react";
-import {IDicesRollResult} from "../dice";
-import {StoreContext} from "../providers/StoreProvider";
+import {Dispatch, useContext} from "react";
+import {IReducerActions, IStore} from "./interface";
+import {GameActions, GameStates} from "./enum";
+import {StoreContext} from "./StoreProvider";
+import {canTradeChicken, canTradeEggs, canTradeHens, getCurrentPlayer} from "./utils";
 
-export interface IEvaluateDiceResult {
-    roll: number;
-    action: GameActions;
-    message: string;
-}
-
-export interface IStore {
-    activePlayerId: number;
-    gameState: GameStates;
-    players: IPlayer[];
-}
-
-interface IPlayer {
-    id: number;
-    name: string;
-    rolls: IDicesRollResult[];
-    hens: number;
-    chicken: number;
-    egg: number;
-    rooster: boolean;
-}
-
-export enum GameStates {
-  StartGame = 'startGame',
-  SwitchPlayer = 'switchPlayer',
-  TradeOrRoll = 'tradeOrRoll',
-  EvaluateEndOfTurn = 'evaluateEndOfTurn',
-  EndGame = 'endGame'
-}
-
-export enum GameActions {
-    AddEgg = 'addEgg',
-    AddChicken = 'addChicken',
-    AddHen ='addHen',
-    SkipTurn = 'skipTurn',
-    FoxAttack = 'foxAttack',
-    GiveEgg = 'giveEgg',
-    GiveChicken = 'giveChicken',
-    RemoveEggs = 'removeEggs',
-    RemoveChickens = 'removeChickens',
-    TradeEggs = 'tradeEggs',
-    TradeChicken = 'tradeChicken',
-    EndTurn = 'endTurn',
-    Reset = 'reset'
-}
-
-// TODO implement trade system
-const canTradeEggs = (player: IPlayer) => player.egg >= 3;
-const canTradeChicken = (player: IPlayer) => player.chicken >= 3;
-const tradeEggs = (player: IPlayer) => {
-    const result = { ...player };
-    result.egg -= 3;
-    result.chicken += 1;
-}
-
-type IStartGame = { action: GameStates.StartGame, payload: { playerNames: string[] } }
-type IEndGame = { action: GameStates.EndGame }
-type ISwitchTurns = { action: GameStates.SwitchPlayer }
-type ITradeOrRoll = { action: GameStates.TradeOrRoll }
-type IEvaluate = { action: GameStates.EvaluateEndOfTurn, payload: { roll: IDicesRollResult } }
-
-type ISkipTurn = { action: GameActions.SkipTurn }
-type IFoxAttack = { action: GameActions.FoxAttack }
-type IAddEgg = { action: GameActions.AddEgg }
-type IAddChicken = { action: GameActions.AddChicken }
-type IAddHen = { action: GameActions.AddHen }
-export type IGiveEgg = { action: GameActions.GiveEgg, payload: { targetPlayerId: number } }
-export type IGiveChicken = { action: GameActions.GiveChicken, payload: { targetPlayerId: number } }
-type IRemoveEggs = { action: GameActions.RemoveEggs }
-type IRemoveChickens = { action: GameActions.RemoveChickens }
-type ITradeEggs = { action: GameActions.TradeEggs }
-type ITradeChicken = { action: GameActions.TradeChicken }
-type IEndTurn = { action: GameActions.EndTurn }
-type IReset = { action: GameActions.Reset }
-
-type IReducerActions = IStartGame | IEndGame | ISkipTurn | IAddEgg | IAddChicken | IAddHen | IGiveEgg | IGiveChicken | IRemoveEggs | IRemoveChickens | ISwitchTurns | ITradeOrRoll | IEvaluate | ITradeChicken | ITradeEggs | IFoxAttack | IEndTurn | IReset;
-
-export const getCurrentPlayer = (store: IStore) => store.players.find((player) => player.id === store.activePlayerId);
-export const hasPlayerEmptySore = (player: IPlayer) => player.egg === 0 && player.chicken === 0 && player.hens === 0
 
 export const initStore: IStore = {
     activePlayerId: 0,
@@ -110,7 +33,7 @@ export const storeReducer = (state: IStore, payload: IReducerActions): IStore =>
                 ...state,
                 activePlayerId: (state.activePlayerId + 1) % state.players.length,
                 gameState: GameStates.TradeOrRoll,
-                players: state.players.map((player) => currentPlayer.id === player.id ? {...player, rolls: [ ...player.rolls, payload.payload.roll ] } : player)
+                players: payload.payload?.roll ? state.players.map((player) => currentPlayer.id === player.id ? {...player, rolls: [ ...player.rolls, payload.payload.roll ] } : player) : state.players
             };
         // Game Actions
         case GameActions.SkipTurn:
@@ -153,15 +76,20 @@ export const storeReducer = (state: IStore, payload: IReducerActions): IStore =>
         case GameActions.FoxAttack:
             const hasRooster = currentPlayer?.rooster;
             if (hasRooster) {
+                console.log('Fox attack was prevented by rooster');
                 return {
                     ...state, players: state.players.map((player) => state.activePlayerId === player.id ? { ...player, rooster: false } : player)
                 };
             }
+            console.log('Fox attack was successful. All hens are gone!');
             return {
                 ...state,
                 players: state.players.map((player) => currentPlayer.id === state.activePlayerId  ? { ...player, hens: 0 } : player)
             };
         case GameActions.TradeEggs:
+            if (!canTradeEggs(currentPlayer)) {
+                return state;
+            }
             return {
                 ...state, players: state.players.map((player) => state.activePlayerId === player.id ? {
                     ...player,
@@ -169,12 +97,27 @@ export const storeReducer = (state: IStore, payload: IReducerActions): IStore =>
                     chicken: player.chicken += 1,
                 } : player)
             };
-        case GameActions.TradeChicken:
+        case GameActions.TradeChickens:
+            if (!canTradeChicken(currentPlayer)) {
+                return state;
+            }
             return {
                 ...state, players: state.players.map((player) => state.activePlayerId === player.id ? {
                     ...player,
                     chicken: player.chicken -= 3,
                     hens: player.hens += 1
+                } : player)
+            };
+        case GameActions.TradeHens:
+            if (!canTradeHens(currentPlayer)) {
+                return state;
+            }
+            return {
+                ...state,
+                players: state.players.map((player) => state.activePlayerId === player.id ? {
+                    ...player,
+                    hens: player.hens - 3,
+                    rooster: true,
                 } : player)
             };
         default:

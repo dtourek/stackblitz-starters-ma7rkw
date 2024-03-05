@@ -1,4 +1,5 @@
-import {GameActions, IEvaluateDiceResult, IStore} from "./hooks/useStore";
+import {IEvaluateDiceResult} from "./interface";
+import {GameActions} from "./store/enum";
 
 const rollDice = () => Math.floor(Math.random() * (6)) + 1;
 

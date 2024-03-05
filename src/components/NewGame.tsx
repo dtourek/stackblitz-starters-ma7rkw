@@ -1,5 +1,6 @@
 import { ChangeEvent, useState } from "react";
-import {GameStates, useStore} from "../hooks/useStore";
+import {useStore} from "../store/useStore";
+import {GameStates} from "../store/enum";
 
 interface IForm { name: string; value: string }
 
