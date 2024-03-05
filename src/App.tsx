@@ -1,7 +1,7 @@
-import { FC } from 'react';
-import {GameActions, GameStates, getCurrentPlayer, IGiveChicken, IGiveEgg, useStore} from "./useStore";
+import {GameActions, GameStates, getCurrentPlayer, useStore} from "./useStore";
 import {HenHouse} from "./components/HenHouse";
 import {diceService} from "./dice";
+import {NewGameScreen} from "./NewGameScreen";
 
 /**
  * your task is to create a henhouse game. To win a game you have to fill henhouse with hens. There are 9 slots for hens. Every henhouse has also a rooster, so you can place inside a rooster as well on 10th slot.
@@ -53,8 +53,6 @@ const Game = () => {
     const roll = dice.roll()
     const actionsAfterRoll = dice.evaluateRoll(roll)
 
-      console.log('actionsAfterRoll', actionsAfterRoll)
-
     actionsAfterRoll.forEach(rollResult => {
         if (rollResult.action === GameActions.GiveEgg || rollResult.action === GameActions.GiveChicken) {
             dispatch({ action: rollResult.action, payload: { targetPlayerId: 0 } }) // TODO implement more players
@@ -67,18 +65,26 @@ const Game = () => {
     dispatch({ action: GameStates.EvaluateEndOfTurn });
   };
 
+  if (store.gameState === GameStates.EndGame) {
+      return <div>Hráč {getCurrentPlayer(store).name} vyhrál</div>
+  }
+
+  if (!store.players.length) {
+        return <NewGameScreen />
+  }
+
   return (
     <div>
       <pre style={{background: "#ccc", padding: "10px", display: "block"}} >{JSON.stringify(store, null, 2)}</pre>
       Player name {currentPlayer?.name}
-        {currentPlayer.rolls.length ? <p>Hod hráče {currentPlayer.name} je: {currentPlayer.rolls[currentPlayer.rolls.length - 1].map((roll) => roll.roll) ?? 'Zatím bez hodu'}</p> : null}
+      {currentPlayer.rolls.length ? <p>Hod hráče {currentPlayer.name} je: {currentPlayer.rolls[currentPlayer.rolls.length - 1].map((roll) => roll.roll) ?? 'Zatím bez hodu'}</p> : null}
       <button disabled={store.gameState !== 'tradeOrRoll'} onClick={onRollDices}>Roll a dices</button>
       <HenHouse store={store} />
     </div>
     );
 };
 
-export const App: FC<{ name: string }> = ({ name }) => {
+export const App = () => {
   return (
     <div>
       <Game  />

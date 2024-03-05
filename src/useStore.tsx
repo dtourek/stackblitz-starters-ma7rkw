@@ -1,4 +1,4 @@
-import { useReducer } from "react";
+import {useReducer, createContext, useContext} from "react";
 
 export interface IEvaluateDiceResult {
     roll: number;
@@ -24,6 +24,7 @@ interface IPlayer {
 }
 
 export enum GameStates {
+  StartGame = 'startGame',
   Roll = 'roll',
   SwitchPlayer = 'switchPlayer',
   TradeOrRoll = 'tradeOrRoll',
@@ -59,7 +60,8 @@ const tradeChicken = (player: IPlayer) => {
     result.hens += 1;
 }
 
-type IRoll = { action: GameStates.Roll }
+type IStartGame = { action: GameStates.StartGame, payload: { playerNames: string[] } }
+type IEndGame = { action: GameStates.EndGame }
 type ISwitchTurns = { action: GameStates.SwitchPlayer }
 type ITradeOrRoll = { action: GameStates.TradeOrRoll }
 type IEvaluate = { action: GameStates.EvaluateEndOfTurn }
@@ -78,36 +80,33 @@ type ITradeChicken = { action: GameActions.TradeChicken }
 type IEndTurn = { action: GameActions.EndTurn }
 
 
-type IReducerActions = IRoll | ISkipTurn | IAddEgg | IAddChicken | IAddHen | IGiveEgg | IGiveChicken | IRemoveEggs | IRemoveChickens | ISwitchTurns | ITradeOrRoll | IEvaluate | ITradeChicken | ITradeEggs | IFoxAttack | IEndTurn;
+type IReducerActions = IStartGame | IEndGame | ISkipTurn | IAddEgg | IAddChicken | IAddHen | IGiveEgg | IGiveChicken | IRemoveEggs | IRemoveChickens | ISwitchTurns | ITradeOrRoll | IEvaluate | ITradeChicken | ITradeEggs | IFoxAttack | IEndTurn;
 
 export const getCurrentPlayer = (store: IStore) => store.players.find((player) => player.id === store.activePlayerId);
 
-const initStore: IStore = {
+export const initStore: IStore = {
     activePlayerId: 0,
     gameState:  GameStates.TradeOrRoll,
-    players: [{ id: 0, name: 'Pepa', egg: 0, chicken: 0, hens: 0, rooster: false, rolls: [] }],
+    players: [],
 }
 
-const storeReducer = (state: IStore, payload: IReducerActions): IStore => {
-
+export const storeReducer = (state: IStore, payload: IReducerActions): IStore => {
     switch (payload.action) {
         // Game states
-        case GameStates.SwitchPlayer:
-            // TODO implement
-            return { ...state, activePlayerId: (state.activePlayerId + 1) % state.players.length, gameState: GameStates.TradeOrRoll };
+        case GameStates.StartGame:
+            return { ...state, gameState: GameStates.TradeOrRoll, players: payload.payload.playerNames.map((playerName, index) => ({ id: index, name: playerName, egg: 0, chicken: 0, hens: 0, rooster: false, rolls: [] })) };
+       case GameStates.EndGame:
+           return initStore;
         case GameStates.TradeOrRoll:
             // Zobrazit dialogovy okno, co chce hrac udelat
             // if(trade) trade();
             // else roll();
             break;
         case GameStates.EvaluateEndOfTurn:
-            console.log('EvaluateEndOfTurn', getCurrentPlayer(state)?.hens);
             if(getCurrentPlayer(state).hens === 9) {
-                alert('Hráč vyhrál');
-                return initStore;
+                return { ...state, gameState: GameStates.EndGame };
             }
-            return { ...state, gameState: GameStates.TradeOrRoll };
-
+            return { ...state, activePlayerId: (state.activePlayerId + 1) % state.players.length, gameState: GameStates.TradeOrRoll };
         // Game Actions
         case GameActions.SkipTurn:
             // TODO implement
@@ -179,4 +178,11 @@ const storeReducer = (state: IStore, payload: IReducerActions): IStore => {
     }
 }
 
-export const useStore = () => useReducer(storeReducer, initStore)
+// TODO fix types, add proper default value
+const StoreContext = createContext([])
+export const StoreProvider = ({children}) => {
+    const [state, dispatch] = useReducer(storeReducer, initStore);
+
+    return (<StoreContext.Provider value={[state, dispatch]}>{children}</StoreContext.Provider>)
+}
+export const useStore = () => useContext(StoreContext)
