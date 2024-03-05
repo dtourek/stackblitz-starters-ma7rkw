@@ -1,11 +1,12 @@
-import {useReducer, createContext, useContext} from "react";
+import {useReducer, createContext, useContext, Dispatch} from "react";
+import {IDicesRollResult} from "../dice";
+import {StoreContext} from "../providers/StoreProvider";
 
 export interface IEvaluateDiceResult {
     roll: number;
     action: GameActions;
     message: string;
 }
-
 
 export interface IStore {
     activePlayerId: number;
@@ -16,7 +17,7 @@ export interface IStore {
 interface IPlayer {
     id: number;
     name: string;
-    rolls: [IEvaluateDiceResult, IEvaluateDiceResult][];
+    rolls: IDicesRollResult[];
     hens: number;
     chicken: number;
     egg: number;
@@ -25,7 +26,6 @@ interface IPlayer {
 
 export enum GameStates {
   StartGame = 'startGame',
-  Roll = 'roll',
   SwitchPlayer = 'switchPlayer',
   TradeOrRoll = 'tradeOrRoll',
   EvaluateEndOfTurn = 'evaluateEndOfTurn',
@@ -44,9 +44,11 @@ export enum GameActions {
     RemoveChickens = 'removeChickens',
     TradeEggs = 'tradeEggs',
     TradeChicken = 'tradeChicken',
-    EndTurn = 'endTurn'
+    EndTurn = 'endTurn',
+    Reset = 'reset'
 }
 
+// TODO implement trade system
 const canTradeEggs = (player: IPlayer) => player.egg >= 3;
 const canTradeChicken = (player: IPlayer) => player.chicken >= 3;
 const tradeEggs = (player: IPlayer) => {
@@ -54,17 +56,12 @@ const tradeEggs = (player: IPlayer) => {
     result.egg -= 3;
     result.chicken += 1;
 }
-const tradeChicken = (player: IPlayer) => {
-    const result = { ...player };
-    result.chicken -= 3;
-    result.hens += 1;
-}
 
 type IStartGame = { action: GameStates.StartGame, payload: { playerNames: string[] } }
 type IEndGame = { action: GameStates.EndGame }
 type ISwitchTurns = { action: GameStates.SwitchPlayer }
 type ITradeOrRoll = { action: GameStates.TradeOrRoll }
-type IEvaluate = { action: GameStates.EvaluateEndOfTurn }
+type IEvaluate = { action: GameStates.EvaluateEndOfTurn, payload: { roll: IDicesRollResult } }
 
 type ISkipTurn = { action: GameActions.SkipTurn }
 type IFoxAttack = { action: GameActions.FoxAttack }
@@ -78,11 +75,12 @@ type IRemoveChickens = { action: GameActions.RemoveChickens }
 type ITradeEggs = { action: GameActions.TradeEggs }
 type ITradeChicken = { action: GameActions.TradeChicken }
 type IEndTurn = { action: GameActions.EndTurn }
+type IReset = { action: GameActions.Reset }
 
-
-type IReducerActions = IStartGame | IEndGame | ISkipTurn | IAddEgg | IAddChicken | IAddHen | IGiveEgg | IGiveChicken | IRemoveEggs | IRemoveChickens | ISwitchTurns | ITradeOrRoll | IEvaluate | ITradeChicken | ITradeEggs | IFoxAttack | IEndTurn;
+type IReducerActions = IStartGame | IEndGame | ISkipTurn | IAddEgg | IAddChicken | IAddHen | IGiveEgg | IGiveChicken | IRemoveEggs | IRemoveChickens | ISwitchTurns | ITradeOrRoll | IEvaluate | ITradeChicken | ITradeEggs | IFoxAttack | IEndTurn | IReset;
 
 export const getCurrentPlayer = (store: IStore) => store.players.find((player) => player.id === store.activePlayerId);
+export const hasPlayerEmptySore = (player: IPlayer) => player.egg === 0 && player.chicken === 0 && player.hens === 0
 
 export const initStore: IStore = {
     activePlayerId: 0,
@@ -91,6 +89,8 @@ export const initStore: IStore = {
 }
 
 export const storeReducer = (state: IStore, payload: IReducerActions): IStore => {
+    const currentPlayer = state.players.find((player) => player.id === state.activePlayerId);
+
     switch (payload.action) {
         // Game states
         case GameStates.StartGame:
@@ -106,12 +106,19 @@ export const storeReducer = (state: IStore, payload: IReducerActions): IStore =>
             if(getCurrentPlayer(state).hens === 9) {
                 return { ...state, gameState: GameStates.EndGame };
             }
-            return { ...state, activePlayerId: (state.activePlayerId + 1) % state.players.length, gameState: GameStates.TradeOrRoll };
+            return {
+                ...state,
+                activePlayerId: (state.activePlayerId + 1) % state.players.length,
+                gameState: GameStates.TradeOrRoll,
+                players: state.players.map((player) => currentPlayer.id === player.id ? {...player, rolls: [ ...player.rolls, payload.payload.roll ] } : player)
+            };
         // Game Actions
         case GameActions.SkipTurn:
             // TODO implement
             console.error('Player skipped turn not implemented, yet!');
             return state;
+        case GameActions.Reset:
+            return initStore
         case GameActions.AddEgg:
             return { ...state, players: state.players.map((player) => state.activePlayerId === player.id ? { ...player, egg: player.egg + 1 } : player) };
         case GameActions.AddChicken:
@@ -125,18 +132,17 @@ export const storeReducer = (state: IStore, payload: IReducerActions): IStore =>
                     return {...player, egg: player.egg + 1}
                 }
                 if (player.id === state.activePlayerId) {
-                    return {...player, egg: player.egg - 1}
+                    return {...player, egg: player.egg < 0 ? player.egg - 1 : 0}
                 }
                 return player;
             })};
         case GameActions.GiveChicken:
-            console.log('GiveChicken', payload);
             return {...state, players: state.players.map((player) => {
                 if (player.id === payload.payload.targetPlayerId) {
                     return {...player, chicken: player.chicken + 1}
                 }
                 if (player.id === state.activePlayerId) {
-                    return {...player, chicken: player.chicken - 1}
+                    return {...player, chicken: player.chicken < 0 ? player.chicken - 1 : 0}
                 }
                 return player;
             })};
@@ -145,7 +151,6 @@ export const storeReducer = (state: IStore, payload: IReducerActions): IStore =>
         case GameActions.RemoveChickens:
             return {...state, players: state.players.map((player) => state.activePlayerId === player.id ? { ...player, chicken: 0 } : player)};
         case GameActions.FoxAttack:
-            const currentPlayer = state.players.find((player) => player.id === state.activePlayerId);
             const hasRooster = currentPlayer?.rooster;
             if (hasRooster) {
                 return {
@@ -178,11 +183,4 @@ export const storeReducer = (state: IStore, payload: IReducerActions): IStore =>
     }
 }
 
-// TODO fix types, add proper default value
-const StoreContext = createContext([])
-export const StoreProvider = ({children}) => {
-    const [state, dispatch] = useReducer(storeReducer, initStore);
-
-    return (<StoreContext.Provider value={[state, dispatch]}>{children}</StoreContext.Provider>)
-}
-export const useStore = () => useContext(StoreContext)
+export const useStore = () => useContext(StoreContext) as [IStore, Dispatch<IReducerActions>]

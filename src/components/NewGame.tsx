@@ -1,9 +1,9 @@
 import { ChangeEvent, useState } from "react";
-import {GameStates, useStore} from "./useStore";
+import {GameStates, useStore} from "../hooks/useStore";
 
 interface IForm { name: string; value: string }
 
-export const NewGameScreen = () => {
+export const NewGame = () => {
     const [fields, setFields] = useState<IForm[]>([{ name: 'player0', value: 'Player 1' }])
     const [_, dispatch] = useStore()
     const onFieldChange = (event: ChangeEvent<HTMLInputElement>) => {

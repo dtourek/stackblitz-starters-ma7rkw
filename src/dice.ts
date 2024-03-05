@@ -1,8 +1,8 @@
-import {GameActions, IEvaluateDiceResult, IStore} from "./useStore";
+import {GameActions, IEvaluateDiceResult, IStore} from "./hooks/useStore";
 
 const rollDice = () => Math.floor(Math.random() * (6)) + 1;
 
-type IDicesRollResult = [number, number];
+export type IDicesRollResult = [number, number];
 
 const isSameValue = (roll: IDicesRollResult) => roll[0] === roll[1];
 
