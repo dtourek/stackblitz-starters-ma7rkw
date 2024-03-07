@@ -2,11 +2,13 @@ import {Dispatch, useContext} from "react";
 import {IReducerActions, IStore} from "./interface";
 import {GameActions, GameStates} from "./enum";
 import {StoreContext} from "./StoreProvider";
-import {canTradeChicken, canTradeEggs, canTradeHens, getCurrentPlayer} from "./utils";
+import {canTradeChicken, canTradeEggs, canTradeHens, getCurrentPlayer, hasWon} from "./utils";
+import {config} from "../config";
 
 
 export const initStore: IStore = {
     activePlayerId: 0,
+    turn: 1,
     gameState:  GameStates.TradeOrRoll,
     players: [],
 }
@@ -17,7 +19,7 @@ export const storeReducer = (state: IStore, payload: IReducerActions): IStore =>
     switch (payload.action) {
         // Game states
         case GameStates.StartGame:
-            return { ...state, gameState: GameStates.TradeOrRoll, players: payload.payload.playerNames.map((playerName, index) => ({ id: index, name: playerName, egg: 0, chicken: 0, hens: 0, rooster: false, rolls: [] })) };
+            return { ...state, gameState: GameStates.TradeOrRoll, players: payload.payload.playerNames.map((playerName, index) => ({ id: index, name: playerName, eggs: 0, chickens: 0, hens: 0, rooster: false, rolls: [] })) };
        case GameStates.EndGame:
            return initStore;
         case GameStates.TradeOrRoll:
@@ -26,11 +28,12 @@ export const storeReducer = (state: IStore, payload: IReducerActions): IStore =>
             // else roll();
             break;
         case GameStates.EvaluateEndOfTurn:
-            if(getCurrentPlayer(state).hens === 9) {
+            if(hasWon(getCurrentPlayer(state), config)) {
                 return { ...state, gameState: GameStates.EndGame };
             }
             return {
                 ...state,
+                turn: Math.max(...state.players.map((player) => player.rolls.length + 1)),
                 activePlayerId: (state.activePlayerId + 1) % state.players.length,
                 gameState: GameStates.TradeOrRoll,
                 players: payload.payload?.roll ? state.players.map((player) => currentPlayer.id === player.id ? {...player, rolls: [ ...player.rolls, payload.payload.roll ] } : player) : state.players
@@ -43,36 +46,36 @@ export const storeReducer = (state: IStore, payload: IReducerActions): IStore =>
         case GameActions.Reset:
             return initStore
         case GameActions.AddEgg:
-            return { ...state, players: state.players.map((player) => state.activePlayerId === player.id ? { ...player, egg: player.egg + 1 } : player) };
+            return { ...state, players: state.players.map((player) => state.activePlayerId === player.id ? { ...player, eggs: player.eggs + 1 } : player) };
         case GameActions.AddChicken:
-            return { ...state, players: state.players.map((player) => state.activePlayerId === player.id ? { ...player, chicken: player.chicken + 1 } : player) };
+            return { ...state, players: state.players.map((player) => state.activePlayerId === player.id ? { ...player, chickens: player.chickens + 1 } : player) };
         case GameActions.AddHen:
             return { ...state, players: state.players.map((player) => state.activePlayerId === player.id ? { ...player, hens: player.hens + 1 } : player) };
         case GameActions.GiveEgg:
             console.log('GiveEgg', payload);
             return {...state, players: state.players.map((player) => {
                 if (player.id === payload.payload.targetPlayerId) {
-                    return {...player, egg: player.egg + 1}
+                    return {...player, eggs: player.eggs + 1}
                 }
                 if (player.id === state.activePlayerId) {
-                    return {...player, egg: player.egg < 0 ? player.egg - 1 : 0}
+                    return {...player, eggs: player.eggs < 0 ? player.eggs - 1 : 0}
                 }
                 return player;
             })};
         case GameActions.GiveChicken:
             return {...state, players: state.players.map((player) => {
                 if (player.id === payload.payload.targetPlayerId) {
-                    return {...player, chicken: player.chicken + 1}
+                    return {...player, chickens: player.chickens + 1}
                 }
                 if (player.id === state.activePlayerId) {
-                    return {...player, chicken: player.chicken < 0 ? player.chicken - 1 : 0}
+                    return {...player, chickens: player.chickens < 0 ? player.chickens - 1 : 0}
                 }
                 return player;
             })};
         case GameActions.RemoveEggs:
-            return {...state, players: state.players.map((player) => state.activePlayerId === player.id ? { ...player, egg: 0 } : player)};
+            return {...state, players: state.players.map((player) => state.activePlayerId === player.id ? { ...player, eggs: 0 } : player)};
         case GameActions.RemoveChickens:
-            return {...state, players: state.players.map((player) => state.activePlayerId === player.id ? { ...player, chicken: 0 } : player)};
+            return {...state, players: state.players.map((player) => state.activePlayerId === player.id ? { ...player, chickens: 0 } : player)};
         case GameActions.FoxAttack:
             const hasRooster = currentPlayer?.rooster;
             if (hasRooster) {
@@ -93,8 +96,8 @@ export const storeReducer = (state: IStore, payload: IReducerActions): IStore =>
             return {
                 ...state, players: state.players.map((player) => state.activePlayerId === player.id ? {
                     ...player,
-                    egg: player.egg -= 3,
-                    chicken: player.chicken += 1,
+                    eggs: player.eggs -= 3,
+                    chickens: player.chickens += 1,
                 } : player)
             };
         case GameActions.TradeChickens:
@@ -104,7 +107,7 @@ export const storeReducer = (state: IStore, payload: IReducerActions): IStore =>
             return {
                 ...state, players: state.players.map((player) => state.activePlayerId === player.id ? {
                     ...player,
-                    chicken: player.chicken -= 3,
+                    chickens: player.chickens -= 3,
                     hens: player.hens += 1
                 } : player)
             };

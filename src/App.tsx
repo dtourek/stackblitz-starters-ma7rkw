@@ -1,10 +1,11 @@
-import {HenHouseList} from "./components/HenHouseList";
-import {diceService} from "./dice";
-import {NewGame} from "./components/NewGame";
+import {MainMenu} from "./components/MainMenu";
 import {EndGame} from "./components/EndGame";
-import {GameActions, GameStates} from "./store/enum";
-import {canTradeChicken, canTradeEggs, canTradeHens, getCurrentPlayer} from "./store/utils";
+import {GameStates} from "./store/enum";
+import {hasGameEnded, hasNoPlayers, isGameInEvaluateEndOfTurn} from "./store/utils";
 import {useStore} from "./store/useStore";
+import {GameScreen} from "./components/GameScreen";
+import {config} from "./config";
+import {Container} from "./components/Container";
 
 /**
  * your task is to create a henhouse game. To win a game you have to fill henhouse with hens. There are 9 slots for hens. Every henhouse has also a rooster, so you can place inside a rooster as well on 10th slot.
@@ -42,73 +43,28 @@ import {useStore} from "./store/useStore";
  *
  */
 
-const dice = diceService()
-
 const Game = () => {
   const [store, dispatch] = useStore()
-  const currentPlayer = getCurrentPlayer(store)
 
-  if (store.gameState === 'evaluateEndOfTurn') {
+  if (isGameInEvaluateEndOfTurn(store)) {
       dispatch({ action: GameStates.SwitchPlayer });
   }
 
-  const onRollDices = () => {
-    const roll = dice.roll()
-    const actionsAfterRoll = dice.evaluateRoll(roll)
-    const currentPlayer = getCurrentPlayer(store)
-
-    actionsAfterRoll.forEach(rollResult => {
-        if (rollResult.action === GameActions.GiveEgg || rollResult.action === GameActions.GiveChicken) {
-            dispatch({ action: rollResult.action, payload: { targetPlayerId: currentPlayer.id } }) // TODO implement more players
-            return
-        }
-
-        dispatch({ action: rollResult.action as any })
-    })
-
-    dispatch({ action: GameStates.EvaluateEndOfTurn, payload: { roll } });
-  };
-
-  if (store.gameState === GameStates.EndGame) {
+  if (hasGameEnded(store, config)) {
       return <EndGame />
   }
 
-  if (!store.players.length) {
-        return <NewGame />
+  if (hasNoPlayers(store)) {
+     return <MainMenu />
   }
 
-  const onTradeEggs = () => {
-    dispatch({ action: GameActions.TradeEggs })
-    dispatch({action: GameStates.EvaluateEndOfTurn })
-  }
-  const onTradeChickens = () => {
-    dispatch({action: GameActions.TradeChickens })
-    dispatch({action: GameStates.EvaluateEndOfTurn })
-  }
-
-  const onTradeHens = () => {
-    dispatch({action: GameActions.TradeHens })
-    dispatch({action: GameStates.EvaluateEndOfTurn })
-  }
-
-  return (
-    <div>
-      Player name {currentPlayer?.name}
-      {currentPlayer.rolls.length ? <p>Poslední hod hráče {currentPlayer.name} je: {currentPlayer.rolls[currentPlayer.rolls.length - 1].join(', ') ?? 'Zatím bez hodu'}</p> : null}
-      <button disabled={store.gameState !== 'tradeOrRoll'} onClick={onRollDices}>Hodit 🎲🎲</button>
-      <button onClick={onTradeEggs} disabled={!canTradeEggs(currentPlayer)} >Vyměnit 3 🥚 za 1 kuře (<img src={"ChickenAttack.gif"} />)</button>
-      <button onClick={onTradeChickens} disabled={!canTradeChicken(currentPlayer)}>Vyměnit 3 <img src={"ChickenAttack.gif"} /> za 1 slepici (🐔)</button>
-      <button onClick={onTradeHens} disabled={!canTradeHens(currentPlayer)}>Vyměnit 3 🐔 za 1 kohouta (🐓)</button>
-      <HenHouseList />
-      <pre style={{background: "#ccc", padding: "10px", display: "block"}} >{JSON.stringify(store, null, 2)}</pre>
-    </div>
-    );
+  return <GameScreen />;
 };
 
 export const App = () => {
   return (
-    <div>
+    <Container>
       <Game />
-    </div>
+    </Container>
   );
 };

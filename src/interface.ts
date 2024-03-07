@@ -7,12 +7,19 @@ export interface IEvaluateDiceResult {
     message: string;
 }
 
-export interface IPlayer {
+interface IAnimals {
+    hens: number;
+    chickens: number;
+    eggs: number;
+    rooster: boolean;
+}
+
+export interface IPlayer extends IAnimals {
     id: number;
     name: string;
     rolls: IDicesRollResult[];
-    hens: number;
-    chicken: number;
-    egg: number;
-    rooster: boolean;
+}
+
+export interface IConfig {
+    win: { type: keyof IAnimals, amount: number | boolean },
 }

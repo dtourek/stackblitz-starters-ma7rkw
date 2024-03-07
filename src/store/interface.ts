@@ -27,6 +27,7 @@ export type IReducerActions = IStartGame | IEndGame | ISkipTurn | IAddEgg | IAdd
 
 export interface IStore {
     activePlayerId: number;
+    turn: number;
     gameState: GameStates;
     players: IPlayer[];
 }

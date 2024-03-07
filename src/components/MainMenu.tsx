@@ -1,12 +1,14 @@
 import { ChangeEvent, useState } from "react";
 import {useStore} from "../store/useStore";
 import {GameStates} from "../store/enum";
+import {Button} from "./Button";
 
 interface IForm { name: string; value: string }
 
-export const NewGame = () => {
+export const MainMenu = () => {
     const [fields, setFields] = useState<IForm[]>([{ name: 'player0', value: 'Player 1' }])
     const [_, dispatch] = useStore()
+
     const onFieldChange = (event: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = event.target
         setFields(fields.map((field) => field.name === name ? { ...field, value } : field))
@@ -27,9 +29,11 @@ export const NewGame = () => {
             <h1>New Game</h1>
             <p>Enter Player names</p>
             <form onSubmit={onSubmit}>
-                {fields?.map((field, index) => <input name={field.name} value={field.value} onChange={onFieldChange} />)}
-                <button onClick={() => setFields([...fields, { name: `player${fields.length}`, value: `Player ${fields.length + 1}` }])} type="button">Add Player</button>
-                <button type="submit">Start Game</button>
+                <div style={{display: 'flex', flexFlow: 'column'}}>
+                    {fields?.map((field, index) => <input style={{ marginBottom: 10 }} key={field.name} name={field.name} value={field.value} onChange={onFieldChange} />)}
+                </div>
+                <Button onClick={() => setFields([...fields, { name: `player${fields.length}`, value: `Player ${fields.length + 1}` }])} type="button" buttonType="secondary">Add Player</Button>
+                <Button type="submit" buttonType="primary">Start Game</Button>
             </form>
         </div>
     )

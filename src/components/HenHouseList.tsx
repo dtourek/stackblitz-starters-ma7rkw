@@ -35,8 +35,8 @@ export const HenHouseList = () => {
             {hasPlayerEmptySore(player) ? <div>Prázdný kurník</div> :
                 <>
                     <Slot type={"hens"} count={player.hens} />
-                    <Slot type={"chickens"} count={player.chicken} />
-                    <Slot type={"eggs"} count={player.egg} />
+                    <Slot type={"chickens"} count={player.chickens} />
+                    <Slot type={"eggs"} count={player.eggs} />
                     <Slot type={"rooster"} count={player.rooster ? 1 : 0} />
                 </>}
         </div>
