@@ -1,30 +1,33 @@
 import {useStore} from "../store/useStore";
 import {getCurrentPlayer, hasPlayerEmptySore} from "../store/utils";
+import {Chicken} from "./animals/Chicken";
+import {Egg} from "./animals/Egg";
 
 type IAnimal = 'hens' | 'chickens' | 'eggs' | 'rooster' | 'fox'
-const getEmoji = (type: IAnimal) => {
+
+const Animal = ({ type }: { type: IAnimal }) => {
     switch (type) {
         case 'hens':
-            return '🐔';
+            return <span>🐔</span>;
         case 'rooster':
-            return '🐓';
+            return <span>🐓</span>;
         case 'chickens':
-            return <img src={"ChickenAttack.gif"} />;
+            return <Chicken />;
         case 'fox':
-            return '🦊';
+            return <span>🦊</span>;
         case 'eggs':
-            return '🥚';
+            return <Egg />;
     }
 }
 
-const Slot = ({type, count}: {type: IAnimal, count: number}) => {
+const Slot = ({ type, count }: { type: IAnimal, count: number }) => {
     if (count <= 0) {
         return null
     }
-    return <div>{Array.from(new Array(count)).map((_, index) => <span key={index}>{getEmoji(type)}</span>)} </div>
+    return <div>{Array.from(new Array(count)).map((_, index) => <Animal key={index} type={type} />)}</div>
 }
 
-export const HenHouseList = () => {
+export const HenHouse = () => {
     const [store, dispatch] = useStore()
     const currentPlayer = getCurrentPlayer(store)
 

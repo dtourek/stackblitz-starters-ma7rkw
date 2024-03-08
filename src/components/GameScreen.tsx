@@ -1,5 +1,5 @@
 import {canTradeChicken, canTradeEggs, canTradeHens, getCurrentPlayer} from "../store/utils";
-import {HenHouseList} from "./HenHouseList";
+import {HenHouse} from "./HenHouse";
 import {GameActions, GameStates} from "../store/enum";
 import {useStore} from "../store/useStore";
 import {diceService} from "../dice";
@@ -53,7 +53,7 @@ export const GameScreen = () => {
                 <Button onClick={onTradeChickens} disabled={!canTradeChicken(currentPlayer)} buttonType="secondary">Vyměnit 3 <img src={"ChickenAttack.gif"} /> za 1 slepici (🐔)</Button>
                 <Button onClick={onTradeHens} disabled={!canTradeHens(currentPlayer)} buttonType="secondary">Vyměnit 3 🐔 za 1 kohouta (🐓)</Button>
             </div>
-            <HenHouseList />
+            <HenHouse />
             <pre style={{background: "#ccc", padding: "10px", display: "block"}} >{JSON.stringify(store, null, 2)}</pre>
         </div>
     )
